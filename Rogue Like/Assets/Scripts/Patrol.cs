@@ -6,28 +6,21 @@ public class Patrol : MonoBehaviour
 {
     public float speed = 4f;
     public float waitTime;
-    public Transform moveSpot;
-
-    private float timer;
-
-    public float halfRoomSize;
-    private float minX, maxX, minY, maxY;
-
-    public float horizontal;
-    public float vertical;
+    public Transform[] moveSpots;
     public Animator anim;
-    private Rigidbody2D rb;
 
     public GameObject sight;
+
+    private float timer;
+    private float horizontal;
+    private float vertical;
+    private Rigidbody2D rb;
+    private int randomIndex;
 
     void Start()
     {
         timer = waitTime;
-        minX = GetComponent<Transform>().position.x - halfRoomSize;
-        maxX = GetComponent<Transform>().position.x + halfRoomSize;
-        minY = GetComponent<Transform>().position.y - halfRoomSize;
-        maxY = GetComponent<Transform>().position.y + halfRoomSize;
-        moveSpot.position = new Vector2(Random.Range(minX, maxX), Random.Range(minY, maxY));
+        randomIndex = Random.Range(0, moveSpots.Length);
 
         anim = GetComponent<Animator>();
         rb = GetComponent<Rigidbody2D>();
@@ -36,19 +29,16 @@ public class Patrol : MonoBehaviour
     // Update is called once per frame
     void Update()
     {
-        transform.position = Vector2.MoveTowards(transform.position, moveSpot.position, speed * Time.deltaTime);
+        transform.position = Vector2.MoveTowards(transform.position, moveSpots[randomIndex].position, speed * Time.deltaTime);
 
-        Vector2 lookDir = moveSpot.position - transform.position;
+        Vector2 lookDir = moveSpots[randomIndex].position - transform.position;
         float angle = Mathf.Atan2(lookDir.y, lookDir.x) * Mathf.Rad2Deg;
-        if (Vector2.Distance(transform.position, moveSpot.position) > 0.2f)
+        if (Vector2.Distance(transform.position, moveSpots[randomIndex].position) > 0.2f)
         {
             sight.transform.rotation = Quaternion.Slerp(transform.rotation, Quaternion.AngleAxis(angle, Vector3.forward), 10000 * Time.deltaTime);
         }
 
-        Vector3 direction = (moveSpot.position - transform.position).normalized;
-
-        Debug.Log(direction);
-
+        Vector3 direction = (moveSpots[randomIndex].position - transform.position).normalized;
         
         if (direction.x == 0 && direction.y < 0)
         {
@@ -96,12 +86,17 @@ public class Patrol : MonoBehaviour
         anim.SetFloat("Vertical", vertical);
 
     
-        if (Vector2.Distance(transform.position, moveSpot.position) < 0.2f)
+        if (Vector2.Distance(transform.position, moveSpots[randomIndex].position) < 0.2f)
         {
             if (timer <= 0)
             {
                 timer = waitTime;
-                moveSpot.position = new Vector2(Random.Range(minX, maxX), Random.Range(minY, maxY));
+                int last = randomIndex;
+                randomIndex = Random.Range(0, moveSpots.Length);
+                while (randomIndex == last)
+                {
+                    randomIndex = Random.Range(0, moveSpots.Length);
+                }
                 
             }
             else
